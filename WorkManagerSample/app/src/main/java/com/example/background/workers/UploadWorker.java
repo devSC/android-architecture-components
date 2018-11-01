@@ -18,11 +18,13 @@
 
 package com.example.background.workers;
 
+import android.content.Context;
 import android.net.Uri;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.work.WorkerParameters;
 import com.example.background.Constants;
 import com.example.background.imgur.ImgurApi;
 import com.example.background.imgur.PostImageResponse;
@@ -41,13 +43,23 @@ public class UploadWorker extends Worker {
 
     private static final String TAG = "UploadWorker";
 
+    /**
+     * Creates an instance of the {@link Worker}.
+     *
+     * @param appContext   the application {@link Context}
+     * @param workerParams the set of {@link WorkerParameters}
+     */
+    public UploadWorker(@NonNull Context appContext, @NonNull WorkerParameters workerParams) {
+        super(appContext, workerParams);
+    }
+
     @Override
     @NonNull
     public Result doWork() {
         String imageUriInput = null;
         try {
             Data args = getInputData();
-            imageUriInput = args.getString(Constants.KEY_IMAGE_URI, null);
+            imageUriInput = args.getString(Constants.KEY_IMAGE_URI);
             Uri imageUri = Uri.parse(imageUriInput);
             ImgurApi imgurApi = ImgurApi.getInstance();
             // Upload the image to Imgur.

@@ -19,19 +19,29 @@
 package com.example.background.workers;
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
-import android.support.annotation.NonNull;
-import android.support.v8.renderscript.Allocation;
-import android.support.v8.renderscript.RenderScript;
-
-import com.example.background.R;
+import android.renderscript.Allocation;
+import android.renderscript.RenderScript;
+import androidx.annotation.NonNull;
+import androidx.work.Worker;
+import androidx.work.WorkerParameters;
 import com.example.background.ScriptC_grayscale;
 
 /**
  * Applies a gray scale filter.
  */
 public class GrayScaleFilterWorker extends BaseFilterWorker {
+
+    /**
+     * Creates an instance of the {@link Worker}.
+     *
+     * @param appContext   the application {@link Context}
+     * @param workerParams the set of {@link WorkerParameters}
+     */
+    public GrayScaleFilterWorker(@NonNull Context appContext, @NonNull WorkerParameters workerParams) {
+        super(appContext, workerParams);
+    }
+
     @Override
     Bitmap applyFilter(@NonNull Bitmap bitmap) {
         Context applicationContext = getApplicationContext();

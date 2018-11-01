@@ -18,8 +18,8 @@
 
 package com.example.background;
 
-import android.arch.lifecycle.LiveData;
-import android.arch.lifecycle.ViewModel;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.ViewModel;
 
 import java.util.List;
 
@@ -50,6 +50,6 @@ public class FilterViewModel extends ViewModel {
     }
 
     LiveData<List<WorkStatus>> getOutputStatus() {
-        return mWorkManager.getStatusesByTag(TAG_OUTPUT);
+        return mWorkManager.getStatusesByTagLiveData(TAG_OUTPUT);
     }
 }

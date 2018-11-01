@@ -24,10 +24,11 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.provider.MediaStore;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.work.WorkerParameters;
 import com.example.background.Constants;
 
 import java.text.SimpleDateFormat;
@@ -41,6 +42,17 @@ import androidx.work.Worker;
  * Saves an output image to the {@link MediaStore}.
  */
 public class SaveImageToGalleryWorker extends Worker {
+
+    /**
+     * Creates an instance of the {@link Worker}.
+     *
+     * @param appContext   the application {@link Context}
+     * @param workerParams the set of {@link WorkerParameters}
+     */
+    public SaveImageToGalleryWorker(@NonNull Context appContext, @NonNull WorkerParameters workerParams) {
+        super(appContext, workerParams);
+    }
+
     private static final String TAG = "SvImageToGalleryWrkr";
 
     private static final String TITLE = "Filtered Image";
@@ -54,7 +66,7 @@ public class SaveImageToGalleryWorker extends Worker {
         ContentResolver resolver = applicationContext.getContentResolver();
         try {
             String resourceUri = getInputData()
-                    .getString(Constants.KEY_IMAGE_URI, null);
+                    .getString(Constants.KEY_IMAGE_URI);
             Bitmap bitmap = BitmapFactory.decodeStream(
                     resolver.openInputStream(Uri.parse(resourceUri)));
             String imageUrl = MediaStore.Images.Media.insertImage(

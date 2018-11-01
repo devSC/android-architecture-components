@@ -19,15 +19,17 @@
 package com.example.background
 
 
-import android.arch.lifecycle.LifecycleOwner
-import android.arch.lifecycle.Observer
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.Observer
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
-import android.support.test.InstrumentationRegistry
-import android.support.test.filters.SmallTest
-import android.support.test.runner.AndroidJUnit4
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.test.InstrumentationRegistry
+import androidx.test.filters.SdkSuppress
+import androidx.test.filters.SmallTest
+import androidx.test.runner.AndroidJUnit4
 import androidx.work.WorkManager
 import androidx.work.test.WorkManagerTestInitHelper
 import com.example.background.Constants.KEY_IMAGE_URI
@@ -36,6 +38,7 @@ import com.example.background.workers.BaseFilterWorker
 import com.example.background.workers.BaseFilterWorker.inputStreamFor
 import org.junit.Assert.*
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.concurrent.CountDownLatch
@@ -62,7 +65,10 @@ class ImageOperationsTest {
     private lateinit var mContext: Context
     private lateinit var mTargetContext: Context
     private lateinit var mLifeCycleOwner: LifecycleOwner
-    private lateinit var mWorkManager: WorkManager
+    private var mWorkManager: WorkManager? = null
+
+  @get:Rule
+  var instantTaskExecutorRule = InstantTaskExecutorRule()
 
     @Before
     fun setUp() {
@@ -81,18 +87,18 @@ class ImageOperationsTest {
                 .build()
 
         imageOperations.continuation
-                .synchronous()
-                .enqueueSync()
+                .enqueue()
+                .get()
 
         val latch = CountDownLatch(1)
         val outputs: MutableList<Uri> = mutableListOf()
 
-        imageOperations.continuation.statuses?.observe(mLifeCycleOwner, Observer {
+        imageOperations.continuation.statusesLiveData.observe(mLifeCycleOwner, Observer {
             val statuses = it ?: return@Observer
             val finished = statuses.all { it.state.isFinished }
             if (finished) {
                 val outputUris = statuses.map {
-                    val output = it.outputData.getString(KEY_IMAGE_URI, DEFAULT_IMAGE_URI)
+                    val output = it.outputData.getString(KEY_IMAGE_URI) ?: DEFAULT_IMAGE_URI
                     Uri.parse(output)
                 }.filter {
                     it != Uri.EMPTY
@@ -108,6 +114,7 @@ class ImageOperationsTest {
     }
 
     @Test
+    @SdkSuppress(maxSdkVersion = 22)
     fun testImageOperationsChain() {
         val imageOperations = ImageOperations.Builder(IMAGE)
                 .setApplyWaterColor(true)
@@ -117,18 +124,18 @@ class ImageOperationsTest {
                 .build()
 
         imageOperations.continuation
-                .synchronous()
-                .enqueueSync()
+                .enqueue()
+                .get()
 
         val latch = CountDownLatch(2)
         val outputs: MutableList<Uri> = mutableListOf()
 
-        imageOperations.continuation.statuses?.observe(mLifeCycleOwner, Observer {
+        imageOperations.continuation.statusesLiveData.observe(mLifeCycleOwner, Observer {
             val statuses = it ?: return@Observer
             val finished = statuses.all { it.state.isFinished }
             if (finished) {
                 val outputUris = statuses.map {
-                    val output = it.outputData.getString(KEY_IMAGE_URI, DEFAULT_IMAGE_URI)
+                    val output = it.outputData.getString(KEY_IMAGE_URI) ?: DEFAULT_IMAGE_URI
                     Uri.parse(output)
                 }.filter {
                     it != Uri.EMPTY
@@ -139,13 +146,13 @@ class ImageOperationsTest {
         })
 
         var outputUri: Uri? = null
-        mWorkManager.getStatusesByTag(TAG_OUTPUT).observe(mLifeCycleOwner, Observer {
+        mWorkManager?.getStatusesByTagLiveData(TAG_OUTPUT)?.observe(mLifeCycleOwner, Observer {
             val statuses = it ?: return@Observer
             val finished = statuses.all { it.state.isFinished }
             if (finished) {
                 outputUri =
                         statuses.firstOrNull()
-                                ?.outputData?.getString(KEY_IMAGE_URI, DEFAULT_IMAGE_URI)
+                                ?.outputData?.getString(KEY_IMAGE_URI)
                                 ?.let { Uri.parse(it) }
                 latch.countDown()
             }

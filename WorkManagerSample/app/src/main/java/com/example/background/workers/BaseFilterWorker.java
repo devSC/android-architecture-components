@@ -24,12 +24,13 @@ import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.support.annotation.NonNull;
-import android.support.annotation.VisibleForTesting;
-import android.support.annotation.WorkerThread;
+import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
+import androidx.annotation.WorkerThread;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.work.WorkerParameters;
 import com.example.background.Constants;
 
 import java.io.File;
@@ -55,6 +56,16 @@ public abstract class BaseFilterWorker extends Worker {
     public static final String ASSET_PREFIX = "file:///android_asset/";
 
     /**
+     * Creates an instance of the {@link Worker}.
+     *
+     * @param appContext   the application {@link Context}
+     * @param workerParams the set of {@link WorkerParameters}
+     */
+    public BaseFilterWorker(@NonNull Context appContext, @NonNull WorkerParameters workerParams) {
+        super(appContext, workerParams);
+    }
+
+    /**
      * Reads a {@link Bitmap} given an {@code imageUri} via {@code KEY_IMAGE_URI} and
      * delegates to the implementation of {@link BaseFilterWorker#applyFilter(Bitmap)}.
      *
@@ -63,7 +74,7 @@ public abstract class BaseFilterWorker extends Worker {
     @Override
     @NonNull
     public Result doWork() {
-        String resourceUri = getInputData().getString(Constants.KEY_IMAGE_URI, null);
+        String resourceUri = getInputData().getString(Constants.KEY_IMAGE_URI);
         try {
             if (TextUtils.isEmpty(resourceUri)) {
                 Log.e(TAG, "Invalid input uri");
